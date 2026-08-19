@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ts-videos-manager-deployment-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: ts-videos-manager-deployment-frontend
+  template:
+    metadata:
+      labels:
+        deployment: ts-videos-manager-deployment-frontend
+    spec:
+      containers:
+      - name: ts-videos-manager-container
+        image: ghcr.io/pinfort/tsvideos-frontend:latest
+        ports:
+        - containerPort: 3000

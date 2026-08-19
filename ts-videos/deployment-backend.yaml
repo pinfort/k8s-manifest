@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ts-videos-manager-deployment-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: ts-videos-manager-deployment-backend
+  template:
+    metadata:
+      labels:
+        deployment: ts-videos-manager-deployment-backend
+    spec:
+      containers:
+      - name: ts-videos-manager-backend-container
+        image: ghcr.io/pinfort/tsvideos-backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DATABASE_CONNECTION
+          valueFrom:
+            configMapKeyRef:
+              name: ts-videos-manager-map
+              key: database_connection
+        - name: DATABASE_USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: ts-videos-manager-secrets
+              key: database_username
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ts-videos-manager-secrets
+              key: database_password
+        - name: VIDEO_STORE_NAS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ts-videos-manager-map
+              key: video_store_nas_url
+        - name: VIDEO_STORE_NAS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ts-videos-manager-secrets
+              key: video_store_nas_username
+        - name: VIDEO_STORE_NAS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ts-videos-manager-secrets
+              key: video_store_nas_password

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ts-videos-manager-map
+data:
+  database_connection: "jdbc:mariadb://192.168.2.203:3307/videos_processor"
+  video_store_nas_url: "smb://192.168.2.203/media"
