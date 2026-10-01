@@ -46,6 +46,7 @@ spec:
           subPath: cache
         - name: media
           mountPath: /data
+          readOnly: true
         livenessProbe:
           httpGet:
             path: /healthz
