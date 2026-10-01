@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stash-deployment
+spec:
+  replicas: 1
+  # SQLite database: never run two pods at once
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      deployment: stash-deployment
+  template:
+    metadata:
+      labels:
+        deployment: stash-deployment
+    spec:
+      containers:
+      - name: stash-container
+        image: stashapp/stash:latest
+        ports:
+        - containerPort: 9999
+        env:
+        - name: STASH_STASH
+          value: /data/
+        - name: STASH_GENERATED
+          value: /generated/
+        - name: STASH_METADATA
+          value: /metadata/
+        - name: STASH_CACHE
+          value: /cache/
+        - name: STASH_PORT
+          value: "9999"
+        volumeMounts:
+        - name: stash-data
+          mountPath: /root/.stash
+          subPath: config
+        - name: stash-data
+          mountPath: /metadata
+          subPath: metadata
+        - name: stash-data
+          mountPath: /generated
+          subPath: generated
+        - name: stash-data
+          mountPath: /cache
+          subPath: cache
+        - name: media
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 9999
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 9999
+          periodSeconds: 10
+      volumes:
+      - name: stash-data
+        persistentVolumeClaim:
+          claimName: stash-data-pvc
+      - name: media
+        persistentVolumeClaim:
+          claimName: stash-media-pvc

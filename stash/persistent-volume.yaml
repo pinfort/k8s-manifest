@@ -1,0 +1,51 @@
+# Media library on the NAS, mounted via csi-driver-smb (https://github.com/kubernetes-csi/csi-driver-smb)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: stash-media-pv
+spec:
+  capacity:
+    storage: 1Ti
+  accessModes:
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - vers=3.0
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: 192.168.2.210/media##stash
+    volumeAttributes:
+      source: //192.168.2.210/media
+    nodeStageSecretRef:
+      name: stash-secrets
+      namespace: stash
+---
+# Stash's own data (config, SQLite database, metadata, generated files, cache)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: stash-data-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+  - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - vers=3.0
+  # SQLite needs byte-range locks to be handled locally on CIFS
+  - nobrl
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: 192.168.2.210/stash##stash
+    volumeAttributes:
+      source: //192.168.2.210/stash
+    nodeStageSecretRef:
+      name: stash-secrets
+      namespace: stash
