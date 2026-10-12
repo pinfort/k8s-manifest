@@ -1,0 +1,77 @@
+# One-off migration: copy Stash data from the old SMB share onto the new iSCSI LUN.
+# See README.md in this directory. Not part of stash/kustomization.yaml.
+# Temporary PV/PVC pointing at the old SMB share
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: stash-data-old-pv
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+  - ReadOnlyMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  mountOptions:
+  - dir_mode=0777
+  - file_mode=0777
+  - vers=3.0
+  - nobrl
+  csi:
+    driver: smb.csi.k8s.io
+    volumeHandle: 192.168.2.210/stash##stash-migrate
+    volumeAttributes:
+      source: //192.168.2.210/stash
+    nodeStageSecretRef:
+      name: stash-secrets
+      namespace: stash
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: stash-data-old-pvc
+  namespace: stash
+spec:
+  accessModes:
+  - ReadOnlyMany
+  storageClassName: ""
+  volumeName: stash-data-old-pv
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stash-data-migrate
+  namespace: stash
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: copy
+        image: alpine:3.20
+        command:
+        - sh
+        - -c
+        - |
+          set -e
+          cp -a /old/. /new/
+          echo "--- old"; du -sh /old/*
+          echo "--- new"; du -sh /new/*
+        volumeMounts:
+        - name: old
+          mountPath: /old
+          readOnly: true
+        - name: new
+          mountPath: /new
+      volumes:
+      - name: old
+        persistentVolumeClaim:
+          claimName: stash-data-old-pvc
+          readOnly: true
+      - name: new
+        persistentVolumeClaim:
+          claimName: stash-data-pvc

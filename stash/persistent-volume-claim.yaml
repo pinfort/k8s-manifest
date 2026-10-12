@@ -17,7 +17,7 @@ metadata:
   name: stash-data-pvc
 spec:
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   storageClassName: ""
   volumeName: stash-data-pv
   resources:
