@@ -24,6 +24,7 @@ spec:
       namespace: stash
 ---
 # Stash's own data (config, SQLite database, metadata, generated files, cache)
+# on an iSCSI LUN of the NAS (target nas02-stash-data, LUN 0, CHAP disabled)
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -31,21 +32,14 @@ metadata:
 spec:
   capacity:
     storage: 100Gi
+  # Block device with a local filesystem: only one node may mount it
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
-  mountOptions:
-  - dir_mode=0777
-  - file_mode=0777
-  - vers=3.0
-  # SQLite needs byte-range locks to be handled locally on CIFS
-  - nobrl
-  csi:
-    driver: smb.csi.k8s.io
-    volumeHandle: 192.168.2.210/stash##stash
-    volumeAttributes:
-      source: //192.168.2.210/stash
-    nodeStageSecretRef:
-      name: stash-secrets
-      namespace: stash
+  iscsi:
+    targetPortal: 192.168.2.210:3260
+    iqn: iqn.2004-04.com.qnap:ts-431kx:iscsi.target-0.5d7e7a
+    lun: 0
+    fsType: ext4
+    readOnly: false
