@@ -1,0 +1,31 @@
+# podSelector is a label selector; our pods are labelled app=/deployment= (not app.kubernetes.io/name).
+- Apps:
+  - Stash:
+      href: http://192.168.2.55/
+      icon: stash.png
+      siteMonitor: http://192.168.2.55/
+      namespace: stash
+      podSelector: app=stash
+  - ts-videos:
+      href: http://192.168.2.54/
+      icon: mdi-television-play
+      siteMonitor: http://192.168.2.54/
+      namespace: ts-videos
+      podSelector: app=tsVideosManager
+
+- Infrastructure:
+  - Uptime Kuma:
+      href: http://192.168.2.56/
+      icon: uptime-kuma.png
+      namespace: uptime-kuma
+      podSelector: app=uptime-kuma
+      widget:
+        type: uptimekuma
+        url: http://uptime-kuma-service.uptime-kuma.svc.cluster.local
+        slug: home
+  - Argo CD:
+      href: http://192.168.2.53/
+      icon: argo-cd.png
+      siteMonitor: http://argocd-server.argocd.svc.cluster.local/
+      namespace: argocd
+      app: argocd-server

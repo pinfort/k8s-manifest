@@ -1,0 +1,18 @@
+- datetime:
+    text_size: 2xl
+    format:
+      dateStyle: medium
+      timeStyle: short
+      hour12: false
+- kubernetes:
+    cluster:
+      show: true
+      cpu: true
+      memory: true
+      showLabel: true
+      label: k3s
+    nodes:
+      show: true
+      cpu: true
+      memory: true
+      showLabel: true

@@ -1,0 +1,5 @@
+mode: cluster
+# No Ingress / IngressRoute / Gateway in this cluster: services are listed in services.yaml.
+ingress: false
+traefik: false
+gateway: false
