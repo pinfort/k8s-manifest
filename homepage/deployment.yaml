@@ -60,6 +60,10 @@ spec:
             port: http
           periodSeconds: 10
         volumeMounts:
+        # Writable /app/config: Homepage copies skeleton files for any config it
+        # doesn't find (e.g. proxmox.yaml) and writes logs/ here; it crashes if it can't.
+        # Our files from the ConfigMap are mounted on top.
+        - { name: config-dir, mountPath: /app/config }
         - { name: config, mountPath: /app/config/settings.yaml, subPath: settings.yaml }
         - { name: config, mountPath: /app/config/services.yaml, subPath: services.yaml }
         - { name: config, mountPath: /app/config/widgets.yaml, subPath: widgets.yaml }
@@ -68,10 +72,9 @@ spec:
         - { name: config, mountPath: /app/config/docker.yaml, subPath: docker.yaml }
         - { name: config, mountPath: /app/config/custom.css, subPath: custom.css }
         - { name: config, mountPath: /app/config/custom.js, subPath: custom.js }
-        - { name: logs, mountPath: /app/config/logs }
       volumes:
       - name: config
         configMap:
           name: homepage-config
-      - name: logs
+      - name: config-dir
         emptyDir: {}
