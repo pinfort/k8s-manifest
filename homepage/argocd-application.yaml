@@ -34,3 +34,9 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: homepage
+  # Auto-sync so that old configMapGenerator ConfigMaps get pruned automatically.
+  # (Argo CD only prunes automatically when automated sync is on.)
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
