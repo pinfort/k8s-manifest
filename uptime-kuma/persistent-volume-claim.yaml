@@ -1,0 +1,13 @@
+# Uptime Kuma data (SQLite database, uploads).
+# local-path pins the pod to the node the volume was first created on.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uptime-kuma-data-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi

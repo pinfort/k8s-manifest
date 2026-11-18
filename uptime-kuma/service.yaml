@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: uptime-kuma-service
+  annotations:
+    metallb.io/loadBalancerIPs: 192.168.2.56
+spec:
+  selector:
+    deployment: uptime-kuma-deployment
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 3001
