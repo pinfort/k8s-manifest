@@ -24,8 +24,9 @@
         url: http://uptime-kuma-service.uptime-kuma.svc.cluster.local
         slug: home
   - Argo CD:
-      href: http://192.168.2.53/
+      href: https://192.168.2.53/
       icon: argo-cd.png
-      siteMonitor: http://argocd-server.argocd.svc.cluster.local/
+      # argocd-server redirects HTTP to HTTPS; Homepage accepts its self-signed cert
+      siteMonitor: https://argocd-server.argocd.svc.cluster.local/healthz
       namespace: argocd
       app: argocd-server
