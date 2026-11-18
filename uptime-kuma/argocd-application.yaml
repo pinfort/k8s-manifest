@@ -1,0 +1,36 @@
+# Not part of kustomization.yaml: apply once by hand to register the app in ArgoCD.
+#   kubectl apply -f uptime-kuma/argocd-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: uptime-kuma
+  namespace: argocd
+spec:
+  description: uptime-kuma
+  sourceRepos:
+  - '*'
+  destinations:
+  - name: '*'
+    namespace: uptime-kuma
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: uptime-kuma
+  namespace: argocd
+spec:
+  project: uptime-kuma
+  source:
+    repoURL: git@github.com:pinfort/k8s-manifest.git
+    path: uptime-kuma
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: uptime-kuma
