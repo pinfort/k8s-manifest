@@ -226,6 +226,58 @@ body.night { opacity: 0.35; }
 .pod-ns { color: var(--muted); }
 .pod-reason { flex: 0 0 auto; color: var(--down); margin-left: 10px; font-weight: 600; }
 
+/* ---- weather ---- */
+.panel-weather { margin-bottom: 0; }
+.weather {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.wx-now {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  margin-right: 24px;
+  min-width: 250px;
+}
+.wx-now-icon { font-size: 64px; line-height: 1; margin-right: 12px; }
+.wx-now-temp { font-size: 44px; font-weight: 300; line-height: 1; font-variant-numeric: tabular-nums; }
+.wx-now-label { font-size: 18px; margin-top: 2px; }
+.wx-now-sub { font-size: 14px; color: var(--muted); }
+.wx-hourly, .wx-daily {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: space-between;
+}
+.wx-hourly { min-width: 380px; }
+.wx-daily {
+  min-width: 240px;
+  margin-left: 20px;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+}
+.wx-col { flex: 1 1 0; text-align: center; padding: 0 2px; }
+.wx-col-label { font-size: 14px; color: var(--muted); }
+.wx-col-icon { font-size: 28px; line-height: 1.25; }
+.wx-col-temp { font-size: 17px; font-variant-numeric: tabular-nums; }
+.wx-min { color: var(--muted); font-size: 15px; }
+.wx-col-pop { font-size: 13px; color: var(--muted); min-height: 1em; }
+.wx-col-pop.wx-wet { color: #60a5fa; font-weight: 600; }
+
+/* Portrait: current + hourly on one row, daily on its own row below. */
+@media (orientation: portrait) {
+  .time { font-size: 76px; }
+  .header, .panel { margin-bottom: 12px; }
+  .monitor { padding: 4px 0; }
+  .node { padding: 4px 0; }
+  .wx-now { min-width: 0; margin-right: 12px; }
+  .wx-now-icon { font-size: 48px; }
+  .wx-now-temp { font-size: 36px; }
+  .wx-hourly { min-width: 0; }
+  .wx-daily { flex-basis: 100%; margin: 10px 0 0 0; padding: 10px 0 0 0; border-left: none;
+              border-top: 1px solid var(--border); }
+}
+
 /* ---- landscape: two columns ---- */
 @media (orientation: landscape) and (min-width: 900px) {
   .time { font-size: 72px; }
