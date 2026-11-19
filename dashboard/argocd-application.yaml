@@ -1,0 +1,42 @@
+# Not part of kustomization.yaml: apply once by hand to register the app in ArgoCD.
+#   kubectl apply -f dashboard/argocd-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: dashboard
+  namespace: argocd
+spec:
+  description: dashboard
+  sourceRepos:
+  - '*'
+  destinations:
+  - name: '*'
+    namespace: dashboard
+    server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dashboard
+  namespace: argocd
+spec:
+  project: dashboard
+  source:
+    repoURL: git@github.com:pinfort/k8s-manifest.git
+    path: dashboard
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dashboard
+  # Auto-sync so that old configMapGenerator ConfigMaps get pruned automatically.
+  # (Argo CD only prunes automatically when automated sync is on.)
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false

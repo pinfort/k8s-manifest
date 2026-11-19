@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Home">
+  <meta name="theme-color" content="#0b0e14">
+  <title>Home</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="stale" class="stale hidden">
+    <span class="stale-icon">!</span>
+    <span id="stale-text">データの更新が止まっています</span>
+  </div>
+
+  <header class="header">
+    <div class="clock">
+      <div id="time" class="time">--:--</div>
+      <div id="date" class="date"></div>
+    </div>
+    <div id="summary" class="summary summary-unknown">
+      <div id="summary-title" class="summary-title">読み込み中…</div>
+      <div id="summary-detail" class="summary-detail"></div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="panel panel-monitors">
+      <h2 class="panel-title">サービス <span id="monitors-updated" class="updated"></span></h2>
+      <div id="monitors" class="monitors"></div>
+    </section>
+
+    <section class="panel panel-cluster">
+      <h2 class="panel-title">クラスタ <span id="cluster-updated" class="updated"></span></h2>
+      <div id="nodes" class="nodes"></div>
+      <h3 class="subtitle">問題のある Pod</h3>
+      <div id="pods" class="pods"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
