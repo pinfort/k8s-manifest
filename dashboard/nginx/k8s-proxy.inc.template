@@ -1,0 +1,9 @@
+# Shared settings for the /api/k8s/* locations (rendered to /etc/nginx/conf.d/k8s-proxy.inc).
+proxy_pass https://kubernetes.default.svc;
+proxy_set_header Authorization "Bearer ${K8S_TOKEN}";
+proxy_set_header Accept "application/json";
+proxy_ssl_trusted_certificate /etc/k8s/ca.crt;
+proxy_ssl_verify on;
+proxy_ssl_server_name on;
+proxy_ssl_name kubernetes.default.svc;
+proxy_read_timeout 15s;

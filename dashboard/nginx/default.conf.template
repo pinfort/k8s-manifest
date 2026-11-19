@@ -1,0 +1,52 @@
+# Rendered by the nginx image's envsubst step (only ${K8S_TOKEN} is defined, so
+# nginx's own $variables are left alone).
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+
+    gzip on;
+    gzip_proxied any;
+    gzip_types application/json text/css application/javascript text/javascript;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        limit_except GET { deny all; }
+        add_header Cache-Control "no-cache";
+        try_files $uri $uri/ =404;
+    }
+
+    # Uptime Kuma public status-page API only.
+    location /api/kuma/ {
+        limit_except GET { deny all; }
+        proxy_pass http://uptime-kuma-service.uptime-kuma.svc.cluster.local/api/status-page/;
+        proxy_read_timeout 15s;
+    }
+
+    # Kubernetes API: three fixed read-only paths. The query string is dropped
+    # (trailing "?" in rewrite) so callers can't add ?watch=true etc.
+    location = /api/k8s/nodes {
+        limit_except GET { deny all; }
+        rewrite ^ /api/v1/nodes? break;
+        include /etc/nginx/conf.d/k8s-proxy.inc;
+    }
+    location = /api/k8s/node-metrics {
+        limit_except GET { deny all; }
+        rewrite ^ /apis/metrics.k8s.io/v1beta1/nodes? break;
+        include /etc/nginx/conf.d/k8s-proxy.inc;
+    }
+    location = /api/k8s/pods {
+        limit_except GET { deny all; }
+        rewrite ^ /api/v1/pods? break;
+        include /etc/nginx/conf.d/k8s-proxy.inc;
+    }
+
+    location /api/ {
+        return 404;
+    }
+}

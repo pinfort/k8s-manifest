@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: dashboard-service
+  annotations:
+    metallb.io/loadBalancerIPs: 192.168.2.58
+spec:
+  selector:
+    deployment: dashboard-deployment
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

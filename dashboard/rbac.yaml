@@ -1,0 +1,41 @@
+# Read-only access for the dashboard's /api/k8s/* proxy (nodes, node metrics, pods).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dashboard
+automountServiceAccountToken: false
+---
+# Long-lived token: nginx reads it once from an env var at startup, so a rotating
+# projected token would go stale.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dashboard-token
+  annotations:
+    kubernetes.io/service-account.name: dashboard
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dashboard
+rules:
+- apiGroups: [""]
+  resources: [nodes, pods]
+  verbs: [get, list]
+- apiGroups: [metrics.k8s.io]
+  resources: [nodes]
+  verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dashboard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dashboard
+subjects:
+- kind: ServiceAccount
+  name: dashboard
+  namespace: dashboard

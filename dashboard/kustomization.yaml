@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dashboard
+commonLabels:
+  app: dashboard
+
+resources:
+- namespace.yaml
+- rbac.yaml
+- deployment.yaml
+- service.yaml
+
+configMapGenerator:
+# Static site. Source of truth is the pinfort "dashboard" project; copy it here with
+# its `npm run sync` (scripts/sync-to-manifest.sh). Don't edit these files by hand.
+- name: dashboard-site
+  files:
+  - site/index.html
+  - site/app.js
+  - site/style.css
+# nginx config; envsubst fills in ${K8S_TOKEN} at container start.
+- name: dashboard-nginx
+  files:
+  - nginx/default.conf.template
+  - nginx/k8s-proxy.inc.template
