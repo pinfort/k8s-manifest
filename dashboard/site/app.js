@@ -18,6 +18,17 @@
     // Reload the whole page periodically so a long-running tab doesn't degrade.
     reloadEveryMs: 6 * 60 * 60 * 1000,
     beatsShown: 30,
+    // Open-Meteo (no API key, CORS allowed). Fetched directly by the browser.
+    weather: {
+      latitude: 34.82,
+      longitude: 135.67,
+      timezone: 'Asia/Tokyo',
+      intervalMs: 15 * 60 * 1000,
+      staleAfterMs: 60 * 60 * 1000,
+      hourlyCount: 8,   // columns in the hourly strip
+      hourlyStep: 3,    // hours between columns
+      dailyCount: 5
+    },
     // Dim the screen between these hours (local time). Set start === end to disable.
     nightStartHour: 23,
     nightEndHour: 6
@@ -30,6 +41,7 @@
   var state = {
     kuma: { lastOk: 0, error: null, data: null },
     k8s: { lastOk: 0, error: null, data: null },
+    weather: { lastOk: 0, error: null, data: null },
     startedAt: Date.now()
   };
 
@@ -328,6 +340,127 @@
     }
   }
 
+  // ---------------------------------------------------------------- weather
+
+  // WMO weather codes -> [label, day icon, night icon]
+  var WMO = {
+    0: ['快晴', '☀️', '🌙'],
+    1: ['晴れ', '🌤️', '🌙'],
+    2: ['晴れ時々曇り', '⛅', '☁️'],
+    3: ['曇り', '☁️', '☁️'],
+    45: ['霧', '🌫️', '🌫️'], 48: ['霧', '🌫️', '🌫️'],
+    51: ['霧雨', '🌦️', '🌧️'], 53: ['霧雨', '🌦️', '🌧️'], 55: ['霧雨', '🌧️', '🌧️'],
+    56: ['着氷性の霧雨', '🌧️', '🌧️'], 57: ['着氷性の霧雨', '🌧️', '🌧️'],
+    61: ['小雨', '🌧️', '🌧️'], 63: ['雨', '🌧️', '🌧️'], 65: ['大雨', '🌧️', '🌧️'],
+    66: ['着氷性の雨', '🌧️', '🌧️'], 67: ['着氷性の雨', '🌧️', '🌧️'],
+    71: ['小雪', '🌨️', '🌨️'], 73: ['雪', '🌨️', '🌨️'], 75: ['大雪', '❄️', '❄️'], 77: ['霧雪', '🌨️', '🌨️'],
+    80: ['にわか雨', '🌦️', '🌧️'], 81: ['にわか雨', '🌦️', '🌧️'], 82: ['激しいにわか雨', '⛈️', '⛈️'],
+    85: ['にわか雪', '🌨️', '🌨️'], 86: ['にわか雪', '🌨️', '🌨️'],
+    95: ['雷雨', '⛈️', '⛈️'], 96: ['雷雨（ひょう）', '⛈️', '⛈️'], 99: ['雷雨（ひょう）', '⛈️', '⛈️']
+  };
+
+  function wmo(code, isDay) {
+    var w = WMO[code] || ['不明', '❔', '❔'];
+    return { label: w[0], icon: isDay === 0 ? w[2] : w[1] };
+  }
+
+  function loadWeather() {
+    var c = CONFIG.weather;
+    var url = 'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=' + c.latitude + '&longitude=' + c.longitude +
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day' +
+      '&hourly=temperature_2m,precipitation_probability,weather_code,is_day' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+      '&timezone=' + encodeURIComponent(c.timezone) +
+      '&forecast_days=' + Math.max(c.dailyCount, 2);
+    return getJSON(url).then(function (json) {
+      state.weather.data = json;
+      state.weather.lastOk = Date.now();
+      state.weather.error = null;
+    }, function (err) {
+      state.weather.error = err && err.message ? err.message : String(err);
+    }).then(render);
+  }
+
+  // "2026-11-20" -> local Date (avoid Date("YYYY-MM-DD") being parsed as UTC)
+  function parseLocalDate(s) {
+    var p = String(s).split('-');
+    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  }
+
+  function round(n) { return typeof n === 'number' ? Math.round(n) : '-'; }
+
+  function renderWeather() {
+    var root = $('weather');
+    root.innerHTML = '';
+    var d = state.weather.data;
+    if (!d) {
+      root.appendChild(el('div', state.weather.error ? 'error' : 'empty',
+        state.weather.error ? '天気を取得できません: ' + state.weather.error : '読み込み中…'));
+      return;
+    }
+    var cur = d.current || {};
+    var hourly = d.hourly || {};
+    var daily = d.daily || {};
+
+    // Current conditions
+    var now = el('div', 'wx-now');
+    var w = wmo(cur.weather_code, cur.is_day);
+    now.appendChild(el('div', 'wx-now-icon', w.icon));
+    var nowText = el('div', 'wx-now-text');
+    nowText.appendChild(el('div', 'wx-now-temp', round(cur.temperature_2m) + '°'));
+    nowText.appendChild(el('div', 'wx-now-label', w.label));
+    var todayMax = daily.temperature_2m_max ? daily.temperature_2m_max[0] : null;
+    var todayMin = daily.temperature_2m_min ? daily.temperature_2m_min[0] : null;
+    nowText.appendChild(el('div', 'wx-now-sub',
+      '体感 ' + round(cur.apparent_temperature) + '° ・ 湿度 ' + round(cur.relative_humidity_2m) + '%'));
+    nowText.appendChild(el('div', 'wx-now-sub',
+      '最高 ' + round(todayMax) + '° / 最低 ' + round(todayMin) + '°'));
+    now.appendChild(nowText);
+    root.appendChild(now);
+
+    // Hourly strip, starting from the current hour
+    var times = hourly.time || [];
+    var start = 0;
+    var curHour = String(cur.time || '').slice(0, 13);
+    for (var i = 0; i < times.length; i++) {
+      if (times[i].slice(0, 13) >= curHour) { start = i; break; }
+    }
+    var strip = el('div', 'wx-hourly');
+    for (var k = 1; k <= CONFIG.weather.hourlyCount; k++) {
+      var idx = start + k * CONFIG.weather.hourlyStep;
+      if (idx >= times.length) break;
+      var col = el('div', 'wx-col');
+      var hour = Number(times[idx].slice(11, 13));
+      col.appendChild(el('div', 'wx-col-label', hour + '時'));
+      col.appendChild(el('div', 'wx-col-icon', wmo(hourly.weather_code[idx], hourly.is_day[idx]).icon));
+      col.appendChild(el('div', 'wx-col-temp', round(hourly.temperature_2m[idx]) + '°'));
+      var pop = hourly.precipitation_probability ? hourly.precipitation_probability[idx] : null;
+      col.appendChild(el('div', 'wx-col-pop' + (pop >= 50 ? ' wx-wet' : ''), pop === null ? '' : pop + '%'));
+      strip.appendChild(col);
+    }
+    root.appendChild(strip);
+
+    // Daily
+    var days = el('div', 'wx-daily');
+    var dtimes = daily.time || [];
+    for (var j = 0; j < Math.min(CONFIG.weather.dailyCount, dtimes.length); j++) {
+      var date = parseLocalDate(dtimes[j]);
+      var label = j === 0 ? '今日' : j === 1 ? '明日' : WEEKDAYS[date.getDay()];
+      var dc = el('div', 'wx-col');
+      dc.appendChild(el('div', 'wx-col-label', label));
+      dc.appendChild(el('div', 'wx-col-icon', wmo(daily.weather_code[j], 1).icon));
+      var t = el('div', 'wx-col-temp');
+      t.appendChild(el('span', 'wx-max', round(daily.temperature_2m_max[j]) + '°'));
+      t.appendChild(el('span', 'wx-min', ' ' + round(daily.temperature_2m_min[j]) + '°'));
+      dc.appendChild(t);
+      var dpop = daily.precipitation_probability_max ? daily.precipitation_probability_max[j] : null;
+      dc.appendChild(el('div', 'wx-col-pop' + (dpop >= 50 ? ' wx-wet' : ''), dpop === null ? '' : dpop + '%'));
+      days.appendChild(dc);
+    }
+    root.appendChild(days);
+  }
+
   // ---------------------------------------------------------------- summary & staleness
 
   function renderSummary(groups, nodes, pods) {
@@ -366,10 +499,11 @@
     $('summary-detail').textContent = detail.join(' / ');
   }
 
-  function renderUpdated(id, src) {
+  function renderUpdated(id, src, staleAfterMs) {
     var t = $(id);
     if (!src.lastOk) { t.textContent = ''; return; }
-    t.textContent = (src.error ? '⚠ ' : '') + hhmm(new Date(src.lastOk)) + ' 更新';
+    var stale = src.error || (staleAfterMs && Date.now() - src.lastOk > staleAfterMs);
+    t.textContent = (stale ? '⚠ ' : '') + hhmm(new Date(src.lastOk)) + ' 更新';
   }
 
   function renderStale() {
@@ -399,6 +533,10 @@
     renderSummary(groups, nodes, pods);
     renderUpdated('monitors-updated', state.kuma);
     renderUpdated('cluster-updated', state.k8s);
+    // Weather depends on the internet, not the cluster: it gets a ⚠ in its own
+    // title when stale, but doesn't trigger the red stale frame.
+    renderWeather();
+    renderUpdated('weather-updated', state.weather, CONFIG.weather.staleAfterMs);
     renderStale();
   }
 
@@ -414,6 +552,7 @@
   every(1000, renderClock);
   every(CONFIG.kumaIntervalMs, loadKuma);
   every(CONFIG.k8sIntervalMs, loadK8s);
+  every(CONFIG.weather.intervalMs, loadWeather);
   setInterval(renderStale, 10 * 1000);
   setTimeout(function () { location.reload(); }, CONFIG.reloadEveryMs);
 })();
